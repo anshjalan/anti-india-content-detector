@@ -25,45 +25,28 @@ const TWITTER_BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN;
 const twitterAPI = new TwitterAPI(TWITTER_BEARER_TOKEN);
 
 // --- 2. Create the Analysis function ---
-function runAnalysisScript(comments) {
-  return new Promise((resolve, reject) => {
-    // Determine the python command based on the OS
-    const pythonCommand = process.platform === 'win32' ? 'python' : 'python3';
-    
-    // Spawn a new Python process
-    const pythonProcess = spawn(pythonCommand, ['model_runner.py']);
-    
-    let resultData = '';
-    let errorData = '';
-    
-    // Listen for data from the Python script's output
-    pythonProcess.stdout.on('data', (data) => {
-      resultData += data.toString();
-    });
-    
-    // Listen for errors from the Python script
-    pythonProcess.stderr.on('data', (data) => {
-      errorData += data.toString();
-    });
-    
-    // Handle process exit
-    pythonProcess.on('close', (code) => {
-      if (code !== 0) {
-        return reject(new Error(`Python script exited with code ${code}: ${errorData}`));
+const axios = require("axios");
+
+async function runAnalysisScript(comments) {
+  try {
+    const response = await axios.post(
+      process.env.HF_MODEL_URL,
+      { inputs: comments }, // Hugging Face expects "inputs"
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.HF_API_TOKEN}`,
+          "Content-Type": "application/json"
+        },
       }
-      
-      try {
-        resolve(JSON.parse(resultData));
-      } catch (e) {
-        reject(new Error('Failed to parse JSON from Python script.'));
-      }
-    });
-    
-    // Send the comments data to the Python script
-    pythonProcess.stdin.write(JSON.stringify(comments));
-    pythonProcess.stdin.end();
-  });
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Hugging Face API error:", error.message, error.response?.data);
+    throw new Error("Failed to get response from Hugging Face API.");
+  }
 }
+
 
 // --- 3. YouTube Analysis Endpoint ---
 app.post('/analyze', async (req, res) => {
