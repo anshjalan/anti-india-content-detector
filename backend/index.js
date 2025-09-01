@@ -11,6 +11,12 @@ const app = express();
 app.use(cors()); // Allow requests from our React frontend
 app.use(express.json()); // To parse JSON request bodies
 
+app.use(cors({
+  origin: ["http://localhost:5173", "https://anti-india-content-detector.vercel.app/"], // for testing; later restrict to your frontend domain
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type"]
+}));
+
 const PORT = process.env.PORT || 5000;
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 const TWITTER_BEARER_TOKEN = process.env.TWITTER_BEARER_TOKEN;
