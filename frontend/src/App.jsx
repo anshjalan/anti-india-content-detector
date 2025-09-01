@@ -521,7 +521,7 @@ function App() {
     setError('');
     
     try {
-      const response = await fetch('http://localhost:5000/analyze', {
+      const response = await fetch(`${BACKEND_URL}/analyze`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -557,7 +557,7 @@ function App() {
     setError('');
     
     try {
-      const response = await fetch('http://localhost:5000/analyze-twitter', {
+      const response = await fetch(`${BACKEND_URL}/analyze-twitter`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
