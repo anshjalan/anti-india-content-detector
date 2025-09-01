@@ -5,6 +5,7 @@ import { Search, AlertTriangle, CheckCircle, MessageSquare, TrendingUp, Flag, Co
 // Dark Mode Context
 const DarkModeContext = React.createContext();
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+console.log(BACKEND_URL )
 
 // Dark Mode Provider Component
 const DarkModeProvider = ({ children }) => {
