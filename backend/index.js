@@ -28,24 +28,60 @@ const twitterAPI = new TwitterAPI(TWITTER_BEARER_TOKEN);
 const axios = require("axios");
 
 async function runAnalysisScript(comments) {
+  // Handle the edge case of an empty comments array to avoid an unnecessary API call.
+  if (!comments || comments.length === 0) {
+    return {
+      counts: { anti_india: 0, non_anti_india: 0, total: 0 },
+      anti_india_comments: []
+    };
+  }
+
   try {
+    // --- BATCH REQUEST ---
+    // Send all comments in a single API call.
     const response = await axios.post(
       process.env.HF_MODEL_URL,
-      { inputs: comments }, // Hugging Face expects "inputs"
+      { inputs: comments }, // The 'inputs' key now holds the entire array
       {
         headers: {
           Authorization: `Bearer ${process.env.HF_API_TOKEN}`,
           "Content-Type": "application/json"
-        },
+        }
       }
     );
 
-    return response.data;
-  } catch (error) {
-    console.error("Hugging Face API error:", error.message, error.response?.data);
+    // The API will return an array of results, one for each comment.
+    const predictions = response.data; 
+
+    // --- EFFICIENT DATA PROCESSING ---
+    // Use a single 'reduce' to build the final result object in one pass.
+    return comments.reduce((acc, comment, index) => {
+      // The structure for classification is often [[{...}]]
+      const label = predictions[index][0].label; 
+      
+      if (label === "ANTI_INDIA") {
+        acc.counts.anti_india++;
+        acc.anti_india_comments.push(comment);
+      } else {
+        acc.counts.non_anti_india++;
+      }
+      return acc;
+    }, {
+      // This is the initial value for our accumulator 'acc'
+      counts: {
+        anti_india: 0,
+        non_anti_india: 0,
+        total: comments.length
+      },
+      anti_india_comments: []
+    });
+
+  } catch (err) {
+    console.error("Hugging Face error:", err.response?.data || err.message);
     throw new Error("Failed to get response from Hugging Face API.");
   }
 }
+
 
 
 // --- 3. YouTube Analysis Endpoint ---
